@@ -1,9 +1,11 @@
 package carreiras.com.github.consulta_cep.model
 
+import com.google.gson.annotations.SerializedName
+
 data class Endereco(
     val cep: String = "",
-    val rua: String = "",
-    val cidade: String = "",
+    @SerializedName("logradouro") val rua: String = "",
+    @SerializedName("localidade") val cidade: String = "",
     val bairro: String = "",
     val uf: String = ""
 )
