@@ -32,10 +32,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import carreiras.com.github.consulta_cep.model.Endereco
+import carreiras.com.github.consulta_cep.service.RetrofitFactory
+
 import carreiras.com.github.consulta_cep.ui.theme.ConsultaCEPTheme
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -61,6 +66,8 @@ fun CepScreen() {
     var ufState by remember { mutableStateOf("") }
     var cidadeState by remember { mutableStateOf("") }
     var ruaState by remember { mutableStateOf("") }
+
+    var listaEnderecoState by remember { mutableStateOf(listOf<Endereco>()) }
 
     Column(
         modifier = Modifier
@@ -155,7 +162,27 @@ fun CepScreen() {
                             capitalization = KeyboardCapitalization.Words
                         )
                     )
-                    IconButton(onClick = { /*TODO*/ }) {
+                    IconButton(onClick = {
+                        val call = RetrofitFactory().getCepService()
+                            .getEnderecos(
+                                ufState,
+                                cidadeState,
+                                ruaState
+                            )
+
+                        call.enqueue(object : Callback<List<Endereco>> {
+                            override fun onResponse(
+                                call: Call<List<Endereco>>,
+                                response: Response<List<Endereco>>
+                            ) {
+                                listaEnderecoState = response.body()!!
+                            }
+
+                            override fun onFailure(call: Call<List<Endereco>>, t: Throwable) {
+                                TODO("Not yet implemented")
+                            }
+                        })
+                    }) {
                         Icon(
                             imageVector = Icons.Default.Search,
                             contentDescription = ""
@@ -166,27 +193,30 @@ fun CepScreen() {
         }
         Spacer(modifier = Modifier.height(8.dp))
         LazyColumn() {
-            items(120) {
-                CardEndereco()
+            items(listaEnderecoState.size) { index ->
+                CardEndereco(listaEnderecoState[index])
             }
         }
     }
 }
 
 @Composable
-fun CardEndereco() {
-    Card(modifier = Modifier
-        .fillMaxWidth()
-        .padding(bottom = 4.dp)) {
-        Column(modifier = Modifier
+fun CardEndereco(endereco: Endereco) {
+    Card(
+        modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp)
+            .padding(bottom = 4.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp)
         ) {
-            Text(text = "CEP:")
-            Text(text = "Rua:")
-            Text(text = "Cidade:")
-            Text(text = "Bairro:")
-            Text(text = "UF:")
+            Text(text = "CEP: ${endereco.cep}")
+            Text(text = "Rua: ${endereco.rua}")
+            Text(text = "Cidade: ${endereco.cidade}")
+            Text(text = "Bairro: ${endereco.bairro}")
+            Text(text = "UF: ${endereco.uf}")
         }
     }
 }
